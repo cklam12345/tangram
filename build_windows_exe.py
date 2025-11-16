@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Build Windows Executable
 Creates standalone .exe files for easy deployment

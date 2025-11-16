@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Camera Calibration Tool
 Adjust HSV color ranges for optimal tangram piece detection
@@ -85,8 +86,8 @@ class ColorCalibrator:
     
     def save_ranges(self):
         """Save calibrated ranges to file"""
-        with open('color_calibration.json', 'w') as f:
-            json.dump(self.ranges, f, indent=2)
+        with open('color_calibration.json', 'w', encoding='utf-8') as f:
+            json.dump(self.ranges, f, indent=2, ensure_ascii=False)
         print("Color ranges saved to color_calibration.json")
     
     def run(self):

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Tangram Shape Editor
 Create custom animal shapes by placing pieces on the canvas
@@ -368,7 +369,7 @@ class ShapeEditor:
         
         # Load existing shapes
         try:
-            with open('shapes.json', 'r') as f:
+            with open('shapes.json', 'r', encoding='utf-8') as f:
                 shapes = json.load(f)
         except FileNotFoundError:
             shapes = {}
@@ -377,8 +378,8 @@ class ShapeEditor:
         shapes[self.shape_name.lower().replace(' ', '_')] = shape_data
         
         # Save
-        with open('shapes.json', 'w') as f:
-            json.dump(shapes, f, indent=2)
+        with open('shapes.json', 'w', encoding='utf-8') as f:
+            json.dump(shapes, f, indent=2, ensure_ascii=False)
         
         print(f"Shape '{self.shape_name}' saved successfully!")
     

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Tangram Game - OpenCV piece detection with Pygame visualization
 Detects 7 colored tangram pieces and matches them to target shapes
@@ -185,7 +186,7 @@ class ShapeLibrary:
     def load_shapes(self) -> Dict:
         """Load shapes from JSON file"""
         try:
-            with open(self.filename, 'r') as f:
+            with open(self.filename, 'r', encoding='utf-8') as f:
                 return json.load(f)
         except FileNotFoundError:
             # Create default shapes
@@ -198,13 +199,20 @@ class ShapeLibrary:
                 'name': 'Swan',
                 'difficulty': 'medium',
                 'pieces': [
-                    {'color': 'red', 'center': (200, 300), 'angle': 0, 'piece_type': 'large_triangle'},
-                    {'color': 'blue', 'center': (300, 250), 'angle': 45, 'piece_type': 'large_triangle'},
-                    {'color': 'green', 'center': (400, 300), 'angle': 90, 'piece_type': 'large_triangle'},
-                    {'color': 'orange', 'center': (280, 150), 'angle': 45, 'piece_type': 'medium_triangle'},
-                    {'color': 'yellow', 'center': (310, 180), 'angle': 0, 'piece_type': 'square'},
-                    {'color': 'teal', 'center': (330, 220), 'angle': 45, 'piece_type': 'small_triangle'},
-                    {'color': 'purple', 'center': (350, 120), 'angle': 90, 'piece_type': 'small_triangle'},
+                    # Body (bottom left) - Large red triangle
+                    {'color': 'red', 'center': (180, 380), 'angle': 45, 'piece_type': 'large_triangle'},
+                    # Body (bottom center/right) - Large blue triangle
+                    {'color': 'blue', 'center': (320, 340), 'angle': 135, 'piece_type': 'large_triangle'},
+                    # Body/tail (right) - Medium green triangle  
+                    {'color': 'green', 'center': (420, 360), 'angle': 225, 'piece_type': 'medium_triangle'},
+                    # Neck - Orange PARALLELOGRAM
+                    {'color': 'orange', 'center': (280, 220), 'angle': 45, 'piece_type': 'parallelogram'},
+                    # Neck/chest - Yellow square
+                    {'color': 'yellow', 'center': (320, 270), 'angle': 45, 'piece_type': 'square'},
+                    # Neck support - Teal small triangle
+                    {'color': 'teal', 'center': (350, 300), 'angle': 135, 'piece_type': 'small_triangle'},
+                    # Head - Purple small triangle
+                    {'color': 'purple', 'center': (300, 140), 'angle': 0, 'piece_type': 'small_triangle'},
                 ]
             },
             'cat': {
@@ -241,8 +249,8 @@ class ShapeLibrary:
         """Save shapes to JSON file"""
         if shapes is None:
             shapes = self.shapes
-        with open(self.filename, 'w') as f:
-            json.dump(shapes, f, indent=2)
+        with open(self.filename, 'w', encoding='utf-8') as f:
+            json.dump(shapes, f, indent=2, ensure_ascii=False)
     
     def add_shape(self, name, pieces, difficulty='medium'):
         """Add a new shape to the library"""
