@@ -1,0 +1,44 @@
+{
+  "scale": 1.0,
+  "offset": [
+    506,
+    266
+  ],
+  "pieces": {
+    "large_tri_1": {
+      "x": -34,
+      "y": 77,
+      "rotation": 180
+    },
+    "medium_tri": {
+      "x": 21,
+      "y": 59,
+      "rotation": 135
+    },
+    "large_tri_2": {
+      "x": -75,
+      "y": 30,
+      "rotation": 225
+    },
+    "small_tri_1": {
+      "x": 43,
+      "y": 21,
+      "rotation": 315
+    },
+    "small_tri_2": {
+      "x": 35,
+      "y": -96,
+      "rotation": 270
+    },
+    "square": {
+      "x": 15,
+      "y": -16,
+      "rotation": 315
+    },
+    "parallelogram": {
+      "x": -3,
+      "y": -74,
+      "rotation": 315
+    }
+  }
+}

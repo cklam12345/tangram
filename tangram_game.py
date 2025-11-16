@@ -13,6 +13,14 @@ from dataclasses import dataclass
 from typing import List, Tuple, Dict
 from enum import Enum
 
+# Import shape configurations
+try:
+    from shapes_config import get_shape_pieces, get_all_shapes, PIECE_SIZES
+    USE_CONFIG = True
+except ImportError:
+    USE_CONFIG = False
+    print("Warning: shapes_config.py not found, using built-in shapes")
+
 # Initialize Pygame
 pygame.init()
 
@@ -109,7 +117,8 @@ class TangramDetector:
         # Convert to HSV for better color detection
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
         
-        pieces = []
+        # Track best piece per color (only keep largest/best match per color)
+        best_pieces = {}
         
         for color_name, color_data in PIECE_COLORS.items():
             # Create mask for this color
@@ -126,8 +135,9 @@ class TangramDetector:
             for contour in contours:
                 area = cv2.contourArea(contour)
                 
-                # Filter out small noise
-                if area < 500:
+                # Filter by area - ignore noise (too small) and background (too large)
+                # Adjust these values based on your camera distance and piece size
+                if area < 1500 or area > 80000:
                     continue
                 
                 # Get minimum area rectangle
@@ -148,9 +158,11 @@ class TangramDetector:
                 # Classify piece type based on area (approximate)
                 piece.piece_type = self._classify_piece(area, width, height)
                 
-                pieces.append(piece)
+                # Only keep the largest/best piece per color to avoid duplicates
+                if color_name not in best_pieces or area > best_pieces[color_name].area:
+                    best_pieces[color_name] = piece
         
-        return pieces
+        return list(best_pieces.values())
     
     def _classify_piece(self, area, width, height):
         """Classify piece type based on dimensions"""
@@ -184,7 +196,26 @@ class ShapeLibrary:
         self.shapes = self.load_shapes()
         
     def load_shapes(self) -> Dict:
-        """Load shapes from JSON file"""
+        """Load shapes from config file or JSON file"""
+        # First try to load from shapes_config.py (preferred)
+        if USE_CONFIG:
+            try:
+                config_shapes = get_all_shapes()
+                # Convert config format to internal format
+                shapes = {}
+                for name, shape_data in config_shapes.items():
+                    pieces = get_shape_pieces(name)
+                    shapes[name] = {
+                        'name': shape_data['name'],
+                        'difficulty': shape_data['difficulty'],
+                        'pieces': pieces
+                    }
+                print(f"✓ Loaded {len(shapes)} shapes from shapes_config.py")
+                return shapes
+            except Exception as e:
+                print(f"Warning: Could not load shapes_config.py: {e}")
+        
+        # Fall back to JSON file
         try:
             with open(self.filename, 'r', encoding='utf-8') as f:
                 return json.load(f)
@@ -199,20 +230,26 @@ class ShapeLibrary:
                 'name': 'Swan',
                 'difficulty': 'medium',
                 'pieces': [
-                    # Body (bottom left) - Large red triangle
-                    {'color': 'red', 'center': (180, 380), 'angle': 45, 'piece_type': 'large_triangle'},
-                    # Body (bottom center/right) - Large blue triangle
-                    {'color': 'blue', 'center': (320, 340), 'angle': 135, 'piece_type': 'large_triangle'},
-                    # Body/tail (right) - Medium green triangle  
-                    {'color': 'green', 'center': (420, 360), 'angle': 225, 'piece_type': 'medium_triangle'},
-                    # Neck - Orange PARALLELOGRAM
-                    {'color': 'orange', 'center': (280, 220), 'angle': 45, 'piece_type': 'parallelogram'},
-                    # Neck/chest - Yellow square
-                    {'color': 'yellow', 'center': (320, 270), 'angle': 45, 'piece_type': 'square'},
-                    # Neck support - Teal small triangle
-                    {'color': 'teal', 'center': (350, 300), 'angle': 135, 'piece_type': 'small_triangle'},
-                    # Head - Purple small triangle
-                    {'color': 'purple', 'center': (300, 140), 'angle': 0, 'piece_type': 'small_triangle'},
+                    # BODY - Red (large triangle) - FAR LEFT, pointing right
+                    {'color': 'red', 'center': (180, 500), 'angle': 90, 'piece_type': 'large_triangle'},
+                    
+                    # BODY - Blue (large triangle) - BOTTOM CENTER, pointing up  
+                    {'color': 'blue', 'center': (320, 520), 'angle': 0, 'piece_type': 'large_triangle'},
+                    
+                    # BODY - Green (medium triangle) - BOTTOM RIGHT, pointing up-left
+                    {'color': 'green', 'center': (450, 500), 'angle': 315, 'piece_type': 'medium_triangle'},
+                    
+                    # BODY - Teal (small triangle) - RIGHT SIDE above green, pointing left
+                    {'color': 'teal', 'center': (490, 420), 'angle': 180, 'piece_type': 'small_triangle'},
+                    
+                    # NECK - Yellow (square) - MIDDLE RIGHT, diamond orientation
+                    {'color': 'yellow', 'center': (460, 340), 'angle': 45, 'piece_type': 'square'},
+                    
+                    # NECK - Orange (parallelogram) - UPPER RIGHT, vertical
+                    {'color': 'orange', 'center': (460, 250), 'angle': 0, 'piece_type': 'parallelogram'},
+                    
+                    # HEAD - Purple (small triangle) - TOP RIGHT, pointing right
+                    {'color': 'purple', 'center': (510, 180), 'angle': 90, 'piece_type': 'small_triangle'},
                 ]
             },
             'cat': {
@@ -346,6 +383,20 @@ class TangramGame:
         self.game_area = pygame.Rect(50, 100, 700, 650)
         self.info_area = pygame.Rect(800, 100, 350, 650)
         
+        # Display scaling - make target shapes bigger for 35" display
+        # Camera detection stays at 640x480, but display is scaled up
+        # Increase display_scale for larger displays (2.0 = 2x, 3.0 = 3x, etc.)
+        # Adjust display_offset to center the shape in the game area
+        self.display_scale = 1.5  # 1.5x larger for better visibility on 35" display
+        # Calculate offset to center scaled shape in game area
+        # Game area is 700x650, shape center is around (370, 250) in camera coords
+        # After scaling: (370*1.5, 250*1.5) = (555, 375)
+        # To center in game area: game_area.center - scaled_center + game_area.left
+        self.display_offset = (
+            50 + 700//2 - int(370 * self.display_scale),  # x offset
+            100 + 650//2 - int(250 * self.display_scale)   # y offset
+        )
+        
     def handle_events(self):
         """Handle pygame events"""
         for event in pygame.event.get():
@@ -374,33 +425,133 @@ class TangramGame:
         self.score = self.score_calculator.calculate_match(self.detected_pieces, target_pieces)
     
     def draw_target_shape(self):
-        """Draw the target shape outline"""
+        """Draw the target shape - matched pieces filled, unmatched as outlines"""
         target_data = self.shape_library.shapes[self.current_shape]
         
         # Draw title
         title_text = self.font_large.render(f"Make a {target_data['name']}!", True, PYGAME_COLORS['white'])
         self.screen.blit(title_text, (self.game_area.centerx - title_text.get_width()//2, 20))
         
-        # Draw target pieces as cute cartoon shapes
+        # Calculate which pieces are matched
+        matched_colors = self._get_matched_pieces()
+        
+        # Draw target pieces with rotation
         for piece_data in target_data['pieces']:
             color = PYGAME_COLORS[piece_data['color']]
-            center = piece_data['center']
+            # Apply display scaling to center position
+            center = (
+                int(piece_data['center'][0] * self.display_scale + self.display_offset[0]),
+                int(piece_data['center'][1] * self.display_scale + self.display_offset[1])
+            )
+            angle = piece_data.get('angle', 0)
+            piece_type = piece_data.get('piece_type', '')
+            piece_color = piece_data['color']
             
-            # Draw as simple shapes with outline
-            if 'triangle' in piece_data.get('piece_type', ''):
-                # Draw triangle
-                size = 40 if 'large' in piece_data.get('piece_type', '') else 25
+            # Check if this piece is matched
+            is_matched = piece_color in matched_colors
+            
+            # Determine size based on piece type (also scaled)
+            if 'large' in piece_type:
+                size = int(60 * self.display_scale)
+            elif 'medium' in piece_type:
+                size = int(45 * self.display_scale)
+            elif 'small' in piece_type:
+                size = int(30 * self.display_scale)
+            else:  # square or parallelogram
+                size = int(40 * self.display_scale)
+            
+            # Create surface for drawing rotated shape
+            surf_size = size * 3  # Large enough for rotation
+            surf = pygame.Surface((surf_size, surf_size), pygame.SRCALPHA)
+            surf_center = surf_size // 2
+            
+            # Draw shape on surface
+            if 'triangle' in piece_type:
+                # Draw RIGHT-ANGLED triangle (matching shape editor)
                 points = [
-                    (center[0], center[1] - size),
-                    (center[0] - size, center[1] + size),
-                    (center[0] + size, center[1] + size)
+                    (surf_center - size//2, surf_center - size//2),
+                    (surf_center + size//2, surf_center - size//2),
+                    (surf_center - size//2, surf_center + size//2)
                 ]
-                pygame.draw.polygon(self.screen, color, points, 3)
-            else:
-                # Draw square/parallelogram
-                size = 30
-                pygame.draw.rect(self.screen, color, 
-                               (center[0]-size//2, center[1]-size//2, size, size), 3)
+                if is_matched:
+                    # FILLED - piece is correctly placed!
+                    pygame.draw.polygon(surf, color, points, 0)
+                    pygame.draw.polygon(surf, (255, 255, 255), points, 2)
+                else:
+                    # OUTLINE ONLY - piece not matched yet
+                    pygame.draw.polygon(surf, color, points, 5)
+                
+            elif 'parallelogram' in piece_type:
+                # Draw parallelogram slanting LEFT
+                points = [
+                    (surf_center + size//2, surf_center - size//2),
+                    (surf_center - size//2, surf_center - size//2),
+                    (surf_center - size - size//2, surf_center + size//2),
+                    (surf_center - size//2, surf_center + size//2)
+                ]
+                if is_matched:
+                    pygame.draw.polygon(surf, color, points, 0)
+                    pygame.draw.polygon(surf, (255, 255, 255), points, 2)
+                else:
+                    pygame.draw.polygon(surf, color, points, 5)
+                
+            else:  # square
+                rect_pos = (surf_center - size//2, surf_center - size//2)
+                if is_matched:
+                    pygame.draw.rect(surf, color, (*rect_pos, size, size), 0)
+                    pygame.draw.rect(surf, (255, 255, 255), (*rect_pos, size, size), 2)
+                else:
+                    pygame.draw.rect(surf, color, (*rect_pos, size, size), 5)
+            
+            # Rotate surface (positive angle = counter-clockwise, matching shape editor)
+            rotated = pygame.transform.rotate(surf, angle)
+            rotated_rect = rotated.get_rect(center=center)
+            
+            # Blit to screen
+            self.screen.blit(rotated, rotated_rect)
+    
+    def _get_matched_pieces(self):
+        """
+        Determine which target pieces have matching detected pieces
+        Returns set of colors that are correctly matched
+        Note: Detected pieces are in camera coordinates (640x480)
+        Target pieces are also in camera coordinates (before display scaling)
+        """
+        target_data = self.shape_library.shapes[self.current_shape]
+        matched_colors = set()
+        
+        # Match threshold: position within 50 pixels and angle within 30 degrees
+        # These are in CAMERA COORDINATES (unscaled)
+        POSITION_THRESHOLD = 50
+        ANGLE_THRESHOLD = 30
+        
+        for target_piece in target_data['pieces']:
+            for detected_piece in self.detected_pieces:
+                # Must match color
+                if detected_piece.color != target_piece['color']:
+                    continue
+                
+                # Check position match (both in camera coordinates)
+                pos_diff = np.sqrt(
+                    (detected_piece.center[0] - target_piece['center'][0])**2 +
+                    (detected_piece.center[1] - target_piece['center'][1])**2
+                )
+                
+                if pos_diff > POSITION_THRESHOLD:
+                    continue
+                
+                # Check angle match
+                angle_diff = abs(detected_piece.angle - target_piece['angle'])
+                angle_diff = min(angle_diff, 360 - angle_diff)
+                
+                if angle_diff > ANGLE_THRESHOLD:
+                    continue
+                
+                # Both position and angle match!
+                matched_colors.add(target_piece['color'])
+                break
+        
+        return matched_colors
     
     def draw_detected_pieces(self):
         """Draw detected pieces as cartoon representations"""

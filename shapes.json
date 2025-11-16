@@ -1,0 +1,209 @@
+{
+  "swan": {
+    "name": "Swan",
+    "difficulty": "medium",
+    "pieces": [
+      {
+        "color": "red",
+        "center": [
+          180,
+          380
+        ],
+        "angle": 45,
+        "piece_type": "large_triangle"
+      },
+      {
+        "color": "blue",
+        "center": [
+          320,
+          340
+        ],
+        "angle": 135,
+        "piece_type": "large_triangle"
+      },
+      {
+        "color": "green",
+        "center": [
+          420,
+          360
+        ],
+        "angle": 225,
+        "piece_type": "medium_triangle"
+      },
+      {
+        "color": "orange",
+        "center": [
+          280,
+          220
+        ],
+        "angle": 45,
+        "piece_type": "parallelogram"
+      },
+      {
+        "color": "yellow",
+        "center": [
+          320,
+          270
+        ],
+        "angle": 45,
+        "piece_type": "square"
+      },
+      {
+        "color": "teal",
+        "center": [
+          350,
+          300
+        ],
+        "angle": 135,
+        "piece_type": "small_triangle"
+      },
+      {
+        "color": "purple",
+        "center": [
+          300,
+          140
+        ],
+        "angle": 0,
+        "piece_type": "small_triangle"
+      }
+    ]
+  },
+  "cat": {
+    "name": "Cat",
+    "difficulty": "easy",
+    "pieces": [
+      {
+        "color": "red",
+        "center": [
+          250,
+          300
+        ],
+        "angle": 0,
+        "piece_type": "large_triangle"
+      },
+      {
+        "color": "blue",
+        "center": [
+          350,
+          300
+        ],
+        "angle": 0,
+        "piece_type": "large_triangle"
+      },
+      {
+        "color": "green",
+        "center": [
+          300,
+          200
+        ],
+        "angle": 45,
+        "piece_type": "medium_triangle"
+      },
+      {
+        "color": "yellow",
+        "center": [
+          300,
+          250
+        ],
+        "angle": 0,
+        "piece_type": "square"
+      },
+      {
+        "color": "orange",
+        "center": [
+          220,
+          180
+        ],
+        "angle": 45,
+        "piece_type": "small_triangle"
+      },
+      {
+        "color": "purple",
+        "center": [
+          380,
+          180
+        ],
+        "angle": 135,
+        "piece_type": "small_triangle"
+      },
+      {
+        "color": "teal",
+        "center": [
+          300,
+          150
+        ],
+        "angle": 0,
+        "piece_type": "parallelogram"
+      }
+    ]
+  },
+  "rocket": {
+    "name": "Rocket",
+    "difficulty": "hard",
+    "pieces": [
+      {
+        "color": "red",
+        "center": [
+          300,
+          350
+        ],
+        "angle": 0,
+        "piece_type": "large_triangle"
+      },
+      {
+        "color": "blue",
+        "center": [
+          300,
+          250
+        ],
+        "angle": 0,
+        "piece_type": "large_triangle"
+      },
+      {
+        "color": "green",
+        "center": [
+          300,
+          150
+        ],
+        "angle": 0,
+        "piece_type": "medium_triangle"
+      },
+      {
+        "color": "yellow",
+        "center": [
+          300,
+          200
+        ],
+        "angle": 0,
+        "piece_type": "square"
+      },
+      {
+        "color": "orange",
+        "center": [
+          250,
+          380
+        ],
+        "angle": 45,
+        "piece_type": "small_triangle"
+      },
+      {
+        "color": "purple",
+        "center": [
+          350,
+          380
+        ],
+        "angle": 135,
+        "piece_type": "small_triangle"
+      },
+      {
+        "color": "teal",
+        "center": [
+          300,
+          100
+        ],
+        "angle": 0,
+        "piece_type": "small_triangle"
+      }
+    ]
+  }
+}
